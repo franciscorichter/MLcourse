@@ -1,0 +1,59 @@
+---
+title: "Assigment"
+output: html_document
+---
+#Summary
+This report aims to describe the methodology used to fit a decision tree model in the Human Activity Recognition data set. The framework described in this report it was thought as the simplest option fitting decision tree model, wich can be separated in three short (and fast) steps. The first step is the preprocessing part, which, after a cross-validation division, is a filter of variables with high proportion if missing values. The second part is a decision tree fit using the train function from the caret package. The last part is a goodness of fit performance applied to the test set. It is important to emphasize that the algorithm was build for educational purposes as the simplest option in every step, trying to keep a fast and clear algorithm for the modeling.
+
+
+#Procedure
+As a first step we loaded the data set and separe the training set to perform a cross-validation algorithm
+
+
+```{r}
+training=read.csv(url("http://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"))
+testing=read.csv(url("http://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"))
+library(caret)
+inTrain <- createDataPartition(y=training$classe,p=0.9, list=FALSE)
+Train <- training[inTrain,]
+Test <- training[-inTrain,]
+train=Train
+test=Test
+dim(train) 
+dim(test)
+```
+
+After that, we preprocess the data by removing variables with high proportion of missing values and removing the indicator variable.
+
+```{r, echo=FALSE}
+ind=NULL
+for (i in 1:160){
+  if( length(which(is.na(training[,i])))>2000 | length(which(training[,i]=="")) > 2000) {ind=append(ind,i)}
+}
+names=names(train[,ind])
+for (i in 1:length(names)){
+  train[,names[i]]=NULL
+  test[,names[i]]=NULL
+}
+train$X = NULL
+test$X = NULL
+```
+
+Then we perform the model fit applying the train function fitting a decision tree.
+
+```{r, echo=FALSE}
+modFit <- train(classe ~ .,method="rpart",data=train)
+print(modFit$finalModel)
+library(rattle)
+fancyRpartPlot(modFit$finalModel)
+```
+
+In the table below we can see that, although we performed the simplest model without so much preprocessing and avoiding any kind of complexity in the model, we end with an acceptable estimation in the test subset of the cross-validation.
+
+```{r, echo=FALSE}
+table(predict(modFit,newdata=test),test$classe)
+```
+
+
+It is important to emphasize that this model can be improved easily, just with a more in deep preprocessing procedure or with a more precise algorithm, for instance a random forest algorithm, however this first approach was useful as a fast implementation and as an introduction of the decision tree modeling.
+
